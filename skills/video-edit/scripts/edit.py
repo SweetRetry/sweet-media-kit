@@ -849,7 +849,7 @@ def cmd_gaps(a):
     shutil.rmtree(out_dir, ignore_errors=True)
     beats = {str(sc.get("id", k)): sc.get("beat", "") for k, sc in enumerate(edl.get("scenes") or [])}
     real = lambda i: flat[i]["ok"] and "clip" in flat[i]["sel"]
-    L = ["# 补拍单", "", "由 edl.json 的 gap 选段生成（edit.py gaps），只读。每条交给 video-prompt 写生成 prompt，"
+    L = ["# 补拍单", "", "由 edl.json 的 gap 选段生成（edit.py gaps），只读。每条可写成一次视频生成 prompt，"
          "角色外观见 brief.md。参考帧是成片里前后镜头的衔接帧，可作首尾帧参考。", ""]
     for n in gaps:
         it, s = flat[n], flat[n]["sel"]
