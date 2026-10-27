@@ -8,3 +8,5 @@
 downloads
 completed
 examples
+__pycache__
+*.pyc
