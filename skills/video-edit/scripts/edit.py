@@ -980,13 +980,21 @@ def render_sound(placements, total, fi, fo, tmp):
     if not files:
         run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-t", f"{total:.4f}", out])
         return out
-    # 每路先补齐到全片长度再混。amix 遇到某一路提前结束时，输出会随线程调度时有时无地断掉
-    fc = [f"[{i}:a]adelay={round(at * 1000)}:all=1,apad=whole_dur={total:.4f},atrim=duration={total:.4f}[p{i}]"
-          for i, (_, at) in enumerate(files)]
-    fc.append("".join(f"[p{i}]" for i in range(len(files))) +
-              f"amix=inputs={len(files)}:normalize=0:duration=first,{tail}[ao]")
-    run(["ffmpeg", "-v", "error", "-y"] + [x for f, _ in files for x in ("-i", f)] +
-        ["-filter_complex", ";".join(fc), "-map", "[ao]", "-c:a", "pcm_s16le", out])
+    # 在 Python 里按采样叠加。amix 输入一多，会随线程调度时有时无地丢掉后面的某一路，补齐长度也拦不住
+    sr, n = 48000, round(total * 48000)
+    acc = array.array("f", bytes(8 * n))
+    for f, at in files:
+        raw = run(["ffmpeg", "-v", "error", "-i", f, "-ac", "2", "-ar", str(sr), "-f", "f32le", "-"], binary=True).stdout
+        s = array.array("f")
+        s.frombytes(raw[: len(raw) // 8 * 8])
+        o = 2 * round(at * sr)
+        for j in range(min(len(s), 2 * n - o)):
+            acc[o + j] += s[j]
+    raw = f"{tmp}/sound.f32"
+    with open(raw, "wb") as fh:
+        acc.tofile(fh)
+    run(["ffmpeg", "-v", "error", "-y", "-f", "f32le", "-ar", str(sr), "-ac", "2", "-i", raw,
+         "-af", tail, "-c:a", "pcm_s16le", out])
     verify_mix(out, files, fi, fo, total)
     return out
 
