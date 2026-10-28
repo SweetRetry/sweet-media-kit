@@ -1,4 +1,4 @@
 interface:
   display_name: "Style Anchor"
   short_description: "抽取参考图的稳定风格锚点，输出可迁移、可锁定系列的规则 JSON"
-  default_prompt: "使用 $style-anchor 剥离样本的具体内容，用可判定的边界写出媒介、空间、色彩、光影、材质、技术参数与情绪规则，视频目标另写镜头语言，输出风格锚点 JSON。"
+  default_prompt: "使用 $style-anchor 剥离样本的具体内容，用可判定的边界写出媒介、空间、色彩、光影、材质、技术参数与情绪规则，输出风格锚点 JSON。"
