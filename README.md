@@ -10,6 +10,7 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 - `fight-prompt`：编写冷热兵器、拳脚、机甲、超凡法术与巨物战的视频 prompt，覆盖单镜精拍、多镜长段与分段接力，锁死攻防力学、实体视效、节奏曲线、空间战损与运镜交接。
 - `video-edit`：把一批无序视频素材剪成一条成片，或按意见修改已有成片。
 - `style-anchor`：抽取参考图的稳定风格锚点，剥离具体内容，输出可迁移到新主体、可锁定系列视觉的规则 JSON，视频目标另含镜头语言。
+- `image-replicate`：反推图片的完整生成 prompt，保留内容与位置，输出可复刻原图的 JSON。
 
 ## 相邻能力的边界
 
@@ -20,6 +21,7 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 | 写单张图片／单次视频 prompt | `image-prompt`／`video-prompt` | 无 reference |
 | 写战斗、交手或出招终爆的视频 prompt | `fight-prompt` | 分粒度封装结构与打击视效实体化 reference |
 | 抽取去内容的风格锚点或系列视觉规则 | `style-anchor` | 无 reference |
+| 反推 prompt 复刻原图 | `image-replicate` | 无 reference |
 
 这些入口互不引用，也不默认串联；同一任务确实包含多类问题时再组合。
 

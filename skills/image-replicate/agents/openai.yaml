@@ -1,0 +1,4 @@
+interface:
+  display_name: "Image Replicate"
+  short_description: "反推图片的完整生成 prompt，输出可复刻原图的 JSON"
+  default_prompt: "使用 $image-replicate 穷尽列出画面元素，按观者视角写清位置与占比，写出主体、场景、构图、光色、材质与复现参数，输出可复刻原图的 JSON。"
