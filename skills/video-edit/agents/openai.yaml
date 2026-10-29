@@ -1,0 +1,7 @@
+interface:
+  display_name: "Video Edit"
+  short_description: "把一批无序视频素材剪成一条成片，或按意见改已有成片"
+  default_prompt: "使用 $video-edit 先粗看全部素材再细看要用的每一段，按叙事顺序排拍点、挑备选、避开崩坏帧并调节奏，机械工作交给 scripts/edit.py，成片交给没看过计划的人复述。"
+
+policy:
+  allow_implicit_invocation: false

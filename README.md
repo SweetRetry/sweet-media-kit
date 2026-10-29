@@ -30,13 +30,25 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 - 每个 skill 使用独立目录，位于 `skills/<skill>/`，目录名与 `SKILL.md` 中的 `name` 一致；`name`、`display_name` 和一级标题统一使用英文。
 - skill 专属的按需资料放在该 skill 的 `references/`。
 - 保持 skill 职责独立，避免通过目录分层掩盖能力重叠。
-- 显式调用策略按宿主配置：Claude Code 使用 `SKILL.md` 的 `disable-model-invocation: true`；Codex 使用 `agents/openai.yaml` 的 `policy.allow_implicit_invocation: false`。两者不能互相替代；修改后检查显式可调用、隐式不触发。
+- 全部 skill 只能显式调用，三家宿主各读一份配置，缺一个该宿主就会自动加载：Claude Code 与 pi 读 `SKILL.md` 的 `disable-model-invocation: true`，Codex 读 `agents/openai.yaml` 的 `policy.allow_implicit_invocation: false`。每个 skill 两份都要写；修改后检查显式可调用、隐式不触发。
 - 用户反馈驱动的修改遵循 [AGENTS.md](AGENTS.md) 中的反馈闭环。
 - 修改 `image-prompt` 或 `video-prompt` 前先读 [docs/prompt-skill-principles.md](docs/prompt-skill-principles.md)。
 
-## Claude Code
+## 安装
 
-把 `skills/<skill>/` 整个目录复制或链接到项目级 `.claude/skills/<skill>/` 或用户级 `~/.claude/skills/<skill>/`。带有 `disable-model-invocation: true` 的 skill 不会被 Claude 自动加载，只能由用户通过 `/skill-name` 调用。
+三家宿主都用 `skills/<skill>/` 整个目录，`agents/` 与 `references/`、`scripts/` 一起带上。
+
+### Claude Code
+
+复制或链接到项目级 `.claude/skills/<skill>/` 或用户级 `~/.claude/skills/<skill>/`。带有 `disable-model-invocation: true` 的 skill 不会被 Claude 自动加载，只能由用户通过 `/skill-name` 调用。
+
+### Codex
+
+复制或链接到用户级 `~/.codex/skills/<skill>/` 或项目级 `.agents/skills/<skill>/`。`agents/openai.yaml` 里的 `policy.allow_implicit_invocation: false` 让 Codex 不把 skill 注入上下文，只能由用户用 `$skill-name` 显式调用；`/skills` 可列出已安装的 skill。
+
+### pi
+
+复制或链接到用户级 `~/.pi/agent/skills/<skill>/` 或项目级 `.pi/skills/<skill>/`，也支持 `~/.agents/skills/` 与 `.agents/skills/`。`disable-model-invocation: true` 让 pi 不把 skill 列入自动选择，只能由用户通过 `/skill:name` 调用；改完用 `/reload` 重载。
 
 ## 来源
 

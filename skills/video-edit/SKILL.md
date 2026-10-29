@@ -1,6 +1,7 @@
 ---
 name: video-edit
 description: 视频剪辑：把一批无序视频素材（AI 生成片段、同场多条备选）剪成一条成片，或按意见改已有的成片。给了一批视频要剪一版、粗剪、排顺序、挑备选、避开崩坏帧、调节奏时用。
+disable-model-invocation: true
 ---
 
 # 视频剪辑

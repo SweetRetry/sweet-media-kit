@@ -1,6 +1,7 @@
 ---
 name: image-replicate
 description: 反推一张图片的完整生成 prompt 以复刻原图，保留主体、场景、构图位置与占比、光色、材质与技术参数，输出 JSON；只要风格、换掉内容的迁移不触发。
+disable-model-invocation: true
 ---
 
 # Image Replicate

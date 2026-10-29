@@ -1,6 +1,7 @@
 ---
 name: image-prompt
 description: 编写单张图片的生成或编辑 prompt，把画面拆成主体、构图、色彩光影、材质肌理、风格美学五层，输出结构化提示词；故事规划与视频时序不触发。
+disable-model-invocation: true
 ---
 
 # Image Prompt

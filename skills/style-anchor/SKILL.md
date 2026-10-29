@@ -1,6 +1,7 @@
 ---
 name: style-anchor
 description: 抽取参考图的稳定风格锚点，剥离具体物品、人物身份与情节，把媒介、空间、色彩、光影、材质、技术参数与情绪写成带边界的规则 JSON，用于把风格迁移到新主体或锁定系列视频的视觉 DNA；复刻原图内容不触发。
+disable-model-invocation: true
 ---
 
 # Style Anchor

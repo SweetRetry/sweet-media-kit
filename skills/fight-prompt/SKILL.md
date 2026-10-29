@@ -1,6 +1,7 @@
 ---
 name: fight-prompt
 description: 编写冷兵器、拳脚格斗、枪械机甲、超凡法术与巨物战等战斗视频生成 prompt，覆盖单镜出招、多镜交手与分段接力：建立攻防力学与节奏曲线，实体化打击与视效，锁定色彩、空间、战损与运镜交接；非战斗的日常动作与纯文戏不触发。
+disable-model-invocation: true
 ---
 
 # Fight Prompt

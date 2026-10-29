@@ -1,6 +1,7 @@
 ---
 name: video-prompt
 description: 编写单次视频生成、编辑或延长 prompt，把画面拆成主体动作、运镜调度、光影流转、物理交互、风格节奏、声音六层，输出带时间轴的结构化提示词，写清因果、连续性与无歧义表达；全片剧本和资产规划不触发。
+disable-model-invocation: true
 ---
 
 # Video Prompt

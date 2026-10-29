@@ -2,3 +2,6 @@ interface:
   display_name: "Video Prompt"
   short_description: "按六层与时间轴编写因果清晰、连续无歧义的视频 prompt"
   default_prompt: "使用 $video-prompt 结合当前画面意图与可用素材，按六层归类、先写动作链再切时间片，输出一次 generation 可直接粘贴、带时间轴的视频 prompt。"
+
+policy:
+  allow_implicit_invocation: false
