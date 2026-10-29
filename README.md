@@ -49,7 +49,3 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 ### pi
 
 复制或链接到用户级 `~/.pi/agent/skills/<skill>/` 或项目级 `.pi/skills/<skill>/`，也支持 `~/.agents/skills/` 与 `.agents/skills/`。`disable-model-invocation: true` 让 pi 不把 skill 列入自动选择，只能由用户通过 `/skill:name` 调用；改完用 `/reload` 重载。
-
-## 来源
-
-这些 skill 原在 [retry-kit](https://github.com/SweetRetry/retry-kit) 的 `skills/media/` 下，此前的提交历史留在该仓库。
