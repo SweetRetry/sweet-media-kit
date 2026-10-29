@@ -1,10 +1,10 @@
 ---
-name: produce
+name: film-produce
 description: 逐轮访谈对齐 AIGC 短片或系列的需求，再规划世界观、剧本、资产档案与分镜装配，支持全流程或局部阶段；单张图片或单次视频 prompt 不在范围内。仅供用户显式调用。
 disable-model-invocation: true
 ---
 
-# Produce
+# Film Produce
 
 负责跨镜头的叙事与制作一致性。先访谈，把需求对齐成一份制作简报，再按阶段制作；简报是所有阶段的硬约束。
 

@@ -4,7 +4,7 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 
 ## Skills
 
-- `produce`：逐轮访谈对齐 AIGC 短片需求并确认制作简报，再按范围做世界观、剧本、资产建档与分镜装配。
+- `film-produce`：逐轮访谈对齐 AIGC 短片需求并确认制作简报，再按范围做世界观、剧本、资产建档与分镜装配。
 - `image-prompt`：按主体、构图、色彩光影、材质肌理、风格美学五层编写单张图片的生成或编辑 prompt，输出分 section 的结构化提示词。
 - `video-prompt`：按六层与时间轴编写单次生成、编辑或延长视频的 prompt，写清因果、连续性与无歧义表达。
 - `fight-prompt`：编写冷热兵器、拳脚、机甲、超凡法术与巨物战的视频 prompt，覆盖单镜精拍、多镜长段与分段接力，锁死攻防力学、实体视效、节奏曲线、空间战损与运镜交接。
@@ -16,7 +16,7 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 
 | 任务 | 入口 | 按需加载 |
 | --- | --- | --- |
-| 规划故事、资产与分镜 | `produce` | 当前制作阶段 reference |
+| 规划故事、资产与分镜 | `film-produce` | 当前制作阶段 reference |
 | 剪辑视频素材成片 | `video-edit` | 按需读剪辑手法与看片 reference |
 | 写单张图片／单次视频 prompt | `image-prompt`／`video-prompt` | 无 reference |
 | 写战斗、交手或出招终爆的视频 prompt | `fight-prompt` | 分粒度封装结构与打击视效实体化 reference |
