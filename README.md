@@ -11,6 +11,7 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 - `video-edit`：把一批无序视频素材剪成一条成片，或按意见修改已有成片。
 - `style-anchor`：抽取参考图的稳定风格锚点，剥离具体内容，输出可迁移到新主体、可锁定系列视觉的规则 JSON，视频目标另含镜头语言。
 - `image-replicate`：反推图片的完整生成 prompt，保留内容与位置，输出可复刻原图的 JSON。
+- `midjourney`：按 Midjourney V8.2 写法编写 prompt，经兔子 API 出图，再放大、变体或重抽；按次计费 0.35，token 读 `TUZI_API_KEY` 或 `~/.config/tuzi/api_key`。
 
 ## 相邻能力的边界
 
@@ -19,9 +20,10 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 | 规划故事、资产与分镜 | `film-produce` | 当前制作阶段 reference |
 | 剪辑视频素材成片 | `video-edit` | 按需读剪辑手法与看片 reference |
 | 写单张图片／单次视频 prompt | `image-prompt`／`video-prompt` | 无 reference |
-| 写战斗、交手或出招终爆的视频 prompt | `fight-prompt` | 分粒度封装结构与打击视效实体化 reference |
+| 写战斗、交手或出招终爆的视频 prompt | `fight-prompt` | 无 reference |
 | 抽取去内容的风格锚点或系列视觉规则 | `style-anchor` | 无 reference |
 | 反推 prompt 复刻原图 | `image-replicate` | 无 reference |
+| 用 Midjourney 实际出图 | `midjourney` | `scripts/mj.py` |
 
 这些入口互不引用，也不默认串联；同一任务确实包含多类问题时再组合。
 

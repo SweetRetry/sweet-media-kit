@@ -1,0 +1,7 @@
+interface:
+  display_name: "Midjourney"
+  short_description: "按 V8.2 写法编写 prompt，经兔子 API 出图、放大与变体"
+  default_prompt: "使用 $midjourney 按 V8.2 写法把需求写成英文 prompt，先用 scripts/mj.py --dry-run 校验，报费用后提交，看图验收再决定放大、变体或改 prompt。"
+
+policy:
+  allow_implicit_invocation: false
