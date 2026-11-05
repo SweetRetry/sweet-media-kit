@@ -1,0 +1,7 @@
+interface:
+  display_name: "Sprite Motion"
+  short_description: "用生图素材做游戏风动效短视频：素材生成、抠图切帧、节拍编排、钩子与打击特效、合成成片"
+  default_prompt: "使用 $sprite-motion 先定画幅、时长和生图模型，生成品红底精灵图与无缝背景层，用 scripts/sprites.py 抠图切帧，按节拍网格编排并用一张事件表驱动特效与音效，最后用静帧拼图、连续帧条和波形对齐验收。"
+
+policy:
+  allow_implicit_invocation: false
