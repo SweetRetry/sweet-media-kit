@@ -25,7 +25,7 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 | 抽取去内容的风格锚点或系列视觉规则 | `style-anchor` | 无 reference |
 | 反推 prompt 复刻原图 | `image-replicate` | 无 reference |
 | 经 API 实际生成图片或视频 | `media-gen` | `scripts/gen.py`；Midjourney 读 reference 并用 `scripts/mj.py` |
-| 用生图素材合成游戏风动效短视频 | `sprite-motion` | `scripts/sprites.py`；做特效时读 `references/juice.md` |
+| 用生图素材合成游戏风动效短视频 | `sprite-motion` | `scripts/sprites.py`、`scripts/pose_guide.py`；做特效时读 `references/juice.md` |
 
 这些入口互不引用，也不默认串联；同一任务确实包含多类问题时再组合。
 

@@ -7,6 +7,7 @@
                                                        --strip keys the magenta off a partial layer
                                                        (and, horizontally, crops above its top row)
   sprites.py cycle FRAME [FRAME ...]                   frame-to-frame change of an animation loop
+  sprites.py stride FRAME ... [--scale S --speed V]    root-motion step per frame of a walk/run loop
   sprites.py contact OUT IMAGE [IMAGE ...]             preview sheet on a dark background
 
 Sheets are expected on a flat #FF00FF background. Background = magenta-ish pixels connected to
@@ -163,6 +164,31 @@ def cmd_cycle(a):
           "A near-zero step is a duplicate pose; a spike is a pop.")
 
 
+def cmd_stride(a):
+    """Planted-heel travel into each next frame, in the frames' own coordinates (same canvas,
+    anchored the same way when drawn). A heel jumping forward is the flight step: a new foot lands,
+    so it takes the mean of the planted steps."""
+    heel = []
+    for f in a.frames:
+        alpha = np.asarray(Image.open(f).convert("RGBA"))[-a.rows:, :, 3]
+        cols = np.where(alpha.any(0))[0]
+        heel.append(cols.min() if len(cols) else None)
+    n = len(heel)
+    d = [heel[i] - heel[(i + 1) % n] if None not in (heel[i], heel[(i + 1) % n]) else -1 for i in range(n)]
+    planted = [x for x in d if x >= 0]
+    if not planted:
+        sys.exit("no planted steps found: the frames share no grounded foot in their bottom rows")
+    mean = sum(planted) / len(planted)
+    travel = [(x if x >= 0 else mean) * a.scale for x in d]
+    stride = sum(travel)
+    print("travel per frame (drawn px):", " ".join(f"{x:.1f}" for x in travel))
+    print(f"loop advances {stride:.1f}px; uneven steps are fine, root motion follows them")
+    if a.speed:
+        print(f"at {a.speed:g}px/s play the loop at {a.speed * n / stride:.1f}fps")
+    print("Root motion: on each frame change advance the character by that frame's travel; the camera "
+          "follows the smooth average speed. Constant-speed movement with any frame rate slides.")
+
+
 def cmd_contact(a):
     ims = [Image.open(f).convert("RGBA") for f in a.images]
     cell = 220
@@ -192,6 +218,11 @@ def main():
     p.add_argument("--vertical", action="store_true", help="tile top-to-bottom instead of left-to-right")
     p = sub.add_parser("cycle")
     p.add_argument("frames", nargs="+")
+    p = sub.add_parser("stride")
+    p.add_argument("frames", nargs="+")
+    p.add_argument("--scale", type=float, default=1.0, help="render scale of the frames")
+    p.add_argument("--speed", type=float, help="average ground speed in px/s, to get the frame rate")
+    p.add_argument("--rows", type=int, default=8, help="bottom rows counted as touching the ground")
     p = sub.add_parser("contact")
     p.add_argument("out")
     p.add_argument("images", nargs="+")
@@ -199,7 +230,8 @@ def main():
     if np is None:
         sys.exit("needs numpy and Pillow: python3 -m venv .venv && .venv/bin/pip install numpy pillow, "
                  "then run this script with .venv/bin/python")
-    {"row": cmd_row, "grid": cmd_grid, "layer": cmd_layer, "cycle": cmd_cycle, "contact": cmd_contact}[a.cmd](a)
+    {"row": cmd_row, "grid": cmd_grid, "layer": cmd_layer, "cycle": cmd_cycle, "stride": cmd_stride,
+     "contact": cmd_contact}[a.cmd](a)
 
 
 if __name__ == "__main__":

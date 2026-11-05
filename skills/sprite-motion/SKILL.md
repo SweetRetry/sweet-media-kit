@@ -12,9 +12,9 @@ disable-model-invocation: true
 
 - **钩子（hook）。** 第一秒就有冲击，观众不划走。
 - **打击感（juice）。** 每个动作都有视觉、镜头、时间、声音四路反馈，越到高潮越重。
-- **连贯。** 动作不滑步、不跳帧，滚动不顿挫。
+- **连贯。** 动作不滑步、不跳帧，滚动不顿挫，角色比例全片一致。
 
-`scripts/sprites.py` 负责抠图、切帧、无缝背景层、循环评分和预览拼图，用法看 `sprites.py -h`。需要 numpy、Pillow 和 ffmpeg。
+`scripts/sprites.py` 负责抠图、切帧、无缝背景层、循环评分、走跑步长和预览拼图，`scripts/pose_guide.py` 画走跑姿势引导图，用法看各自的 `-h`。需要 numpy、Pillow 和 ffmpeg。
 
 ## 流程
 
@@ -35,7 +35,9 @@ disable-model-invocation: true
 > Flat solid pure magenta #FF00FF background filling the whole canvas, no shadows, no ground, no text. Crisp 16-bit pixel art, hard pixel edges, no anti-aliasing, consistent pixel size.
 
 - **精灵表**写成一行，帧数、每帧内容、"evenly spaced with clear gaps"、"same scale" 都写明。
-- **动画循环**（跑、走、飞、扇翅、尾焰）用网格：4×4 或 5×5，"one smooth continuous cycle, read left to right then top to bottom, consecutive frames change gradually"，并写出动作的各个相位（跑步是触地、下沉、交叉、腾空，左右腿各一遍）。一行 6–8 帧时，模型常把同一个姿势画好几遍，画面就是滑步加偶尔一跳。同一 prompt 出 2 版再挑。
+- **一张图出多帧。** 一次调用出整张拼图（网格、多行、多个素材并排），同一张里的角色、配色、像素密度天然一致；需要一致的东西放进同一张，不拆成多次调用。编辑接口可以同时传多张参考图，各管一件事并在 prompt 里写明分工。
+- **动画循环**（跑、走、飞、扇翅、尾焰）用网格，"one smooth continuous cycle, read left to right then top to bottom, consecutive frames change gradually"，写出各个相位。只靠文字时模型常把同一个姿势画好几遍，或者每帧脚的移动距离忽大忽小。
+- **走跑循环要配姿势引导图。** 用 `pose_guide.py` 画 2×4 的 8 帧引导图，和角色图一起传给编辑接口：图 1 管外观，图 2 只管动作，prompt 写 "pose guide for motion only, ignore its body proportions; keep the proportions of image 1"。引导图先按角色比例画（`--leg`，先量角色腿长占身高的比例），模型会照抄引导图的比例，腿画长了角色就变形。同一 prompt 出 2 版再挑。
 - **同一角色的新姿势**用图片编辑接口，以第一张角色图做参考图，并在 prompt 里复述外观特征。
 - **会滚动的背景**沿卷轴方向拆层，每层都要求沿该方向 seamless and tileable。横版拆远景层和地面条，地面条只占画面下部、上方品红底；纵版（竖屏射击、下落）拆远景和中景，中景空处品红底。
 - **文字一律不让模型画。** 标题、对白、大字都在本地用像素字体排（中文用 Fusion Pixel Font 这类 OFL 字体，许可证随项目保存）。
@@ -52,12 +54,13 @@ sprites.py grid raw/run.png run --frames 16       # 网格
 sprites.py layer raw/far.png assets/far.png       # 远景层
 sprites.py layer raw/ground.png assets/ground.png --strip
 sprites.py layer raw/stars.png assets/stars.png --vertical
-sprites.py cycle assets/run_{1..16}.png           # 循环评分
+sprites.py cycle assets/run_{1..8}.png            # 循环评分
+sprites.py stride assets/run_{1..8}.png --scale 0.7 --speed 420  # 走跑每帧前进量
 sprites.py contact build/cutouts.png assets/*.png # 深色底预览
 ```
 
 - 帧数报错时重生成那张表，不手工修补。
-- 循环挑选：把各版本的帧放大排成一行用眼看腿和手臂是否逐帧在变，再用 `cycle` 比较，选 max/mean 小、首尾衔接那一步不突出的版本。评分只抓突变，抓不到"每帧同一个姿势"，所以必须先看图。
+- 循环挑选：把各版本的帧放大排成一行用眼看腿和手臂是否逐帧在变，再用 `cycle` 比较，选 max/mean 小、首尾衔接那一步不突出的版本。评分只抓突变，抓不到"每帧同一个姿势"，所以必须先看图。走跑循环再看 `stride`：落地脚每帧后移量相近的版本更顺，同时和原角色图比一下身体比例。
 - 背景层看 `_seamcheck.png`，接缝在图正中，看不出断开才算过。
 - 各张素材的像素格大小不同（同一批里 5–12px 都有），不要强行还原到统一的原生网格；在合成时把位置吸附到 2–4px 网格即可。
 
@@ -69,7 +72,8 @@ sprites.py contact build/cutouts.png assets/*.png # 深色底预览
 - **位置由轨迹反推。** 先写主角的运动函数，再按"第 n 拍主角在哪"放金币和怪物，碰撞自然落在拍上，不用手调。
 - **一张事件表**（时间、类型）同时驱动画面特效和音效。
 - **起伏。** 段落按 开场钩子 → 推进 → 预警 → 高潮 → 庆祝 → 收尾 排，强度逐段加码。高潮落在需求里分量最重的元素上（宝箱、最强的敌人、品牌名揭晓）；要新增需求里没有的角色（比如 Boss）当高潮，先问用户。
-- **防僵硬清单：** 循环 12–16 帧以 20–24fps 播放；动作前有 2–4 帧预备（起跳前蹲、开火前后坐）；离地拉伸、落地压扁并扬尘；镜头跟随主角，远景按近景 1/4 速度移动（视差）；输出 60fps，卷轴在 30fps 下每帧位移大，会顿挫。
+- **走跑用 root motion，脚不打滑。** 角色不按匀速平移：每换一帧，前进 `stride` 量出的该帧前移量，落地脚在地面上原地不动；镜头和事件位置按平均速度的平滑轨迹走，帧率取 `stride --speed` 给的值。匀速平移配任何帧率都会滑步，脚每帧移动距离不等时尤其明显。
+- **防僵硬清单：** 循环以 20–24fps 播放；动作前有 2–4 帧预备（起跳前蹲、开火前后坐）；离地拉伸、落地压扁并扬尘；镜头跟随主角，远景按近景 1/4 速度移动（视差）；输出 60fps，卷轴在 30fps 下每帧位移大，会顿挫。
 - **卡帧与慢动作不离拍。** 用一个时间重映射函数：撞击时世界冻结 0.06–0.1 秒，随后以略快速度追回原时间线；高潮一击半速慢放，到下一拍用闪白和冲击帧切回实时。音乐和事件表保持原时间。
 
 完成标准：每个事件在事件表里有时间，且在拍点上；主角在所有时刻都有确定的位置和姿势。
