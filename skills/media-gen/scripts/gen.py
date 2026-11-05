@@ -326,6 +326,9 @@ def finish(model, path, res, ok, fmt, out_dir, started):
         raise Fail(f"任务失败，见 {out / 'response.json'}")
     if not items:
         raise Fail(f"接口未返回可下载内容，见 {out / 'response.json'}")
+    missed = [i["url"] for i in items if not i.get("path")]
+    if missed:
+        raise Fail(f"已生成但 {len(missed)} 个结果未下载成功（不要重新提交，用上面的 url 重下）")
 
 
 def cmd_run(a):
