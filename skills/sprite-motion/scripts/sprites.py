@@ -12,8 +12,9 @@
 
 Sheets are expected on a flat #FF00FF background. Background = magenta-ish pixels connected to
 the border plus enclosed pure magenta, so purple details inside a sprite survive. An alpha
-channel already present in the file is honoured. Frames of one sheet share its vertical extent
-(row sheets) or their row's extent (grids), so feet stay on one baseline through a cycle.
+channel already present in the file is honoured. A span much narrower than its row neighbours
+(a detached spark or trail) is folded into the nearest frame. Frames of one sheet share its
+vertical extent (row sheets) or their row's extent (grids), so feet stay on one baseline.
 """
 import argparse
 import sys
@@ -73,6 +74,22 @@ def spans(mask, axis):
     return [s for s in out if s[1] - s[0] >= MIN_WIDTH]
 
 
+def merge_slivers(cells):
+    """Fold spans much narrower than their neighbours (a detached spark or trail) into the nearest one."""
+    cells = list(cells)
+    while len(cells) > 1:
+        widths = sorted(b - a for a, b in cells)
+        median = widths[len(widths) // 2]
+        i = min(range(len(cells)), key=lambda k: cells[k][1] - cells[k][0])
+        if cells[i][1] - cells[i][0] >= median / 4:
+            break
+        gap = lambda j: max(cells[j][0] - cells[i][1], cells[i][0] - cells[j][1])
+        j = min((k for k in (i - 1, i + 1) if 0 <= k < len(cells)), key=gap)
+        a, b = sorted((i, j))
+        cells[a:b + 1] = [(min(cells[a][0], cells[b][0]), max(cells[a][1], cells[b][1]))]
+    return cells
+
+
 def save_frames(cells, rgba, name, out, n):
     if len(cells) != n:
         sys.exit(f"{name}: expected {n} frames, found {len(cells)}. Regenerate the sheet or adjust --frames; "
@@ -94,7 +111,7 @@ def cmd_row(a):
     solid = rgba[..., 3] > 0
     rows = np.where(solid.any(axis=1))[0]
     y0, y1 = rows[0], rows[-1] + 1
-    save_frames([(y0, y1, x0, x1) for x0, x1 in spans(solid, 0)], rgba, a.name, a.out, a.frames)
+    save_frames([(y0, y1, x0, x1) for x0, x1 in merge_slivers(spans(solid, 0))], rgba, a.name, a.out, a.frames)
 
 
 def cmd_grid(a):
@@ -102,7 +119,7 @@ def cmd_grid(a):
     solid = rgba[..., 3] > 0
     cells = []
     for y0, y1 in spans(solid, 1):
-        cells += [(y0, y1, x0, x1) for x0, x1 in spans(solid[y0:y1], 0)]
+        cells += [(y0, y1, x0, x1) for x0, x1 in merge_slivers(spans(solid[y0:y1], 0))]
     save_frames(cells, rgba, a.name, a.out, a.frames)
 
 
