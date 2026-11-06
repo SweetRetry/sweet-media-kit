@@ -1,12 +1,12 @@
 ---
 name: media-gen
-description: 经兔子 API 实际生成图片或视频：用 token 查可用模型、端点与参数，按用户指定的模型和参数提交，取回结果验收；含 Midjourney V8.2 写法。只写 prompt、不提交时不触发。
+description: 经兔子 API 实际生成图片、视频或音乐：用 token 查可用模型、端点与参数，按用户指定的模型和参数提交，取回结果验收；含 Midjourney V8.2 写法。只写 prompt、不提交时不触发。
 disable-model-invocation: true
 ---
 
 # Media Gen
 
-经兔子 API 调用生成模型。Midjourney 走 `scripts/mj.py`，写法与按钮流程见 [references/midjourney.md](references/midjourney.md)。其余模型走 `scripts/gen.py`，端点、参数与计费都从站点目录读取。用法看各脚本 `-h`。
+经兔子 API 调用生成模型。Midjourney 走 `scripts/mj.py`，写法与按钮流程见 [references/midjourney.md](references/midjourney.md)。Suno 走 `scripts/suno.py`。其余模型走 `scripts/gen.py`，端点、参数与计费都从站点目录读取。用法看各脚本 `-h`。
 
 ## Token
 
@@ -25,7 +25,7 @@ token 只经脚本读取。不打印、不回显、不写进 prompt、日志或�
 - **模型。** `gen.py models [--kind 生图|视频|音频] [--grep X]` 列出当前 token 能调用的模型（来自 `/v1/models`）。站点新上的模型以这里为准，不靠记忆。把与需求相关的候选列给用户选。
 - **参数。** `gen.py info <model>` 打印站点说明、端点、参数表（类型、取值、范围、默认值）、请求示例、可用分组和计费方式（来自公开的 `/api/pricing`）。把参数表里的必填项和与需求相关的可选项列给用户。参数表没写的字段，按端点文档链接理解，标为未经站点确认。
 - **分组差异。** 同一模型在不同分组能力不同，如 gpt-image 系列的 SVG 和 `output_format: "gif"` 只在官方或官方优惠分组生效。token 属于哪个分组查不到，要用到分组专属能力时问用户。
-- **端点。** `info` 标了「gen.py 不支持」的端点（chat、gemini 形态等）不提交；模型只有这类端点时告诉用户并给出文档链接。
+- **端点。** `info` 标了「gen.py 不支持」的端点（chat、gemini 形态等）不提交；模型只有这类端点时告诉用户并给出文档链接。上游是第三方厂商的模型（Suno、Midjourney），网关只是代理：目录写的端点对不上时，按厂商官方 API 的路径和字段提交，不因此判定不可用。
 
 用户说“随便”或“你定”时，给出一个具体组合及理由，等用户确认后再提交。
 
