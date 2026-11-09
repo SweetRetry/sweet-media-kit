@@ -1,0 +1,7 @@
+interface:
+  display_name: "Character Design"
+  short_description: "从概念简报到三视图与动作测试的原创角色设计流程"
+  default_prompt: "使用 $character-design 先写可画出的概念简报，跨域收参考并提炼设计规则，按变化轴做剪影探索，细化后锁定设计规格，再出主视觉、三视图与动作测试并逐条验收。"
+
+policy:
+  allow_implicit_invocation: false
