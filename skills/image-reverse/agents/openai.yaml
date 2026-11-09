@@ -1,0 +1,7 @@
+interface:
+  display_name: "Image Reverse"
+  short_description: "反推参考图，输出可复刻原图的 JSON 或可迁移的风格锚点 JSON"
+  default_prompt: "使用 $image-reverse 先定复刻或锚点模式。复刻时穷尽列出画面元素，按观者视角写清位置与占比，输出可复刻原图的 JSON；锚点时剥离具体内容，用可判定的边界写出风格规则 JSON。"
+
+policy:
+  allow_implicit_invocation: false
