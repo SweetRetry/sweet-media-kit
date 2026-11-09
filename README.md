@@ -4,13 +4,12 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 
 ## Skills
 
-- `film-produce`：逐轮访谈对齐 AIGC 短片需求并确认制作简报，再按范围做世界观、剧本、资产建档与分镜装配。
+- `film-pipeline`：按立项、故事、视觉、特效、镜头、生成装配六个阶段推进 AIGC 短片，每类决策只在所属阶段做出，逐阶段过关卡。
 - `image-prompt`：按主体、构图、色彩光影、材质肌理、风格美学五层编写单张图片的生成或编辑 prompt，输出分 section 的结构化提示词。
 - `video-prompt`：按六层与时间轴编写单次生成、编辑或延长视频的 prompt，写清因果、连续性与无歧义表达。
 - `fight-prompt`：编写冷热兵器、拳脚、机甲、超凡法术与巨物战的视频 prompt，覆盖单镜精拍、多镜长段与分段接力，锁死攻防力学、实体视效、节奏曲线、空间战损与运镜交接。
 - `video-edit`：把一批无序视频素材剪成一条成片，或按意见修改已有成片。
-- `style-anchor`：抽取参考图的稳定风格锚点，剥离具体内容，输出可迁移到新主体、可锁定系列视觉的规则 JSON，视频目标另含镜头语言。
-- `image-replicate`：反推图片的完整生成 prompt，保留内容与位置，输出可复刻原图的 JSON。
+- `image-reverse`：反推参考图为规则 JSON。复刻模式保留内容与位置，输出可复刻原图的生成 prompt；锚点模式剥离具体内容，抽取可迁移到新主体、可锁定系列视觉的风格规则。
 - `media-gen`：经兔子 API 实际生成图片、视频或音乐。用 token 查可用模型、参数与计费，按用户指定的模型和参数提交并验收；含 Midjourney V8.2 写法。token 读 `TUZI_API_KEY` 或 `~/.config/tuzi/api_key`。
 - `character-design`：从一句话概念做原创角色设计。概念简报、跨域参考板、剪影探索、设计细化与设计规格锁定，再出主视觉、三视图与动作测试，逐阶段验收。
 - `sprite-motion`：用生图素材做游戏风动效短视频。生成精灵图与背景层，本地抠图切帧，按节拍编排动作，加开场钩子、打击感特效与音效，合成成片。
@@ -19,12 +18,11 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 
 | 任务 | 入口 | 按需加载 |
 | --- | --- | --- |
-| 规划故事、资产与分镜 | `film-produce` | 当前制作阶段 reference |
+| 分阶段推进短片的故事、视觉、特效与分镜 | `film-pipeline` | 当前阶段 reference |
 | 剪辑视频素材成片 | `video-edit` | 按需读剪辑手法与看片 reference |
 | 写单张图片／单次视频 prompt | `image-prompt`／`video-prompt` | 无 reference |
 | 写战斗、交手或出招终爆的视频 prompt | `fight-prompt` | 无 reference |
-| 抽取去内容的风格锚点或系列视觉规则 | `style-anchor` | 无 reference |
-| 反推 prompt 复刻原图 | `image-replicate` | 无 reference |
+| 反推参考图为复刻 prompt 或风格锚点 | `image-reverse` | 无 reference |
 | 经 API 实际生成图片、视频或音乐 | `media-gen` | `scripts/gen.py`；Midjourney 读 reference 并用 `scripts/mj.py`；Suno 用 `scripts/suno.py` |
 | 从概念到三视图设计原创角色 | `character-design` | 无 reference |
 | 用生图素材合成游戏风动效短视频 | `sprite-motion` | `scripts/sprites.py`、`scripts/pose_guide.py`；做特效时读 `references/juice.md` |
