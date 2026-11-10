@@ -10,7 +10,6 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 - `fight-prompt`：编写冷热兵器、拳脚、机甲、超凡法术与巨物战的视频 prompt，覆盖单镜精拍、多镜长段与分段接力，锁死攻防力学、实体视效、节奏曲线、空间战损与运镜交接。
 - `video-edit`：把一批无序视频素材剪成一条成片，或按意见修改已有成片。
 - `image-reverse`：反推参考图为规则 JSON。复刻模式保留内容与位置，输出可复刻原图的生成 prompt；锚点模式剥离具体内容，抽取可迁移到新主体、可锁定系列视觉的风格规则。
-- `media-gen`：经兔子 API 实际生成图片、视频或音乐。用 token 查可用模型、参数与计费，按用户指定的模型和参数提交并验收；含 Midjourney V8.2 写法。token 读 `TUZI_API_KEY` 或 `~/.config/tuzi/api_key`。
 - `character-design`：从一句话概念做原创角色设计。概念简报、跨域参考板、剪影探索、设计细化与设计规格锁定，再出主视觉、三视图与动作测试，逐阶段验收。
 - `sprite-motion`：用生图素材做游戏风动效短视频。生成精灵图与背景层，本地抠图切帧，按节拍编排动作，加开场钩子、打击感特效与音效，合成成片。
 
@@ -23,7 +22,6 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 | 写单张图片／单次视频 prompt | `image-prompt`／`video-prompt` | 无 reference |
 | 写战斗、交手或出招终爆的视频 prompt | `fight-prompt` | 无 reference |
 | 反推参考图为复刻 prompt 或风格锚点 | `image-reverse` | 无 reference |
-| 经 API 实际生成图片、视频或音乐 | `media-gen` | `scripts/gen.py`；Midjourney 读 reference 并用 `scripts/mj.py`；Suno 用 `scripts/suno.py` |
 | 从概念到三视图设计原创角色 | `character-design` | 无 reference |
 | 用生图素材合成游戏风动效短视频 | `sprite-motion` | `scripts/sprites.py`、`scripts/pose_guide.py`；做特效时读 `references/juice.md` |
 

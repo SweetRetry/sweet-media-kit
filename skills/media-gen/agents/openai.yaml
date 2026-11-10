@@ -1,7 +1,0 @@
-interface:
-  display_name: "Media Gen"
-  short_description: "经兔子 API 查可用模型与参数，按用户指定的模型生成图片或视频；含 Midjourney V8.2"
-  default_prompt: "使用 $media-gen 先用 scripts/gen.py models 与 info 查可用模型和参数，让用户指定模型和参数，dry-run 校验后提交，验收结果。"
-
-policy:
-  allow_implicit_invocation: false
