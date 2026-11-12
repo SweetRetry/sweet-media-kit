@@ -1,0 +1,7 @@
+interface:
+  display_name: "Promo Film"
+  short_description: "把一个能力卖点做成不直白的宣传短片创意、节拍表与生成 prompt"
+  default_prompt: "使用 $promo-film 把卖点改写成观众能亲历的差异，按门槛、蜕变、兑现、签名发散至少 8 个方案，用闸门筛掉直白方案，选出 A/B 两版写节拍表、生成 prompt 与后期说明。"
+
+policy:
+  allow_implicit_invocation: false
