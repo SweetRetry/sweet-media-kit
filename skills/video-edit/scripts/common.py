@@ -17,6 +17,7 @@ SEPARATOR = ["audio-separator", "{in}", "-m", "model_bs_roformer_ep_317_sdr_12.9
              "--output_dir", "{out}", "--model_file_dir", "~/.cache/audio-separator",
              "--custom_output_names", '{"Vocals": "voice", "Instrumental": "bed"}']
 SEAM_JUMP = 10.0          # 剪点前后 0.3 秒响度差超过这么多 dB，进听片清单。实测全片相邻窗自然起伏 p90 约 9 dB
+SEAM_ALIKE = 0.6          # 剪点两侧 32×18 灰度缩略图的相关系数到这么高，多半是同一构图。实测换机位 17 处最高 0.68、其余不超过 0.59，同构图接缝 3 处 0.66 到 0.94
 SLOW = 0.75               # 低于这个倍速的慢放会放大崩坏，慢放区间要 6fps 看过
 MATCH_STRENGTH = 0.8      # 色彩匹配向基准靠拢的比例，留一点素材本来的差别
 MATCH_GAIN, MATCH_SHIFT = (0.75, 1.33), 40   # 每个通道对比度倍数和均值平移（0-255）的上限，超出说明基准选错了
@@ -166,6 +167,13 @@ def integrated_lufs(path):
                          capture_output=True, text=True).stderr
     m = re.findall(r"^\s+I:\s+(-?[\d.]+) LUFS", err, re.M)
     return float(m[-1]) if m else None
+
+def lines_of(f, e):
+    """素材的台词：日志里校对过的优先，没有就用机器转写。"""
+    own = (e or {}).get("lines")
+    ok = isinstance(own, list) and all(isinstance(l, dict) and is_num(l.get("t0"), l.get("t1"))
+                                       and isinstance(l.get("text"), str) for l in own)
+    return own if ok else (f.get("lines") or [])   # 格式不对的由 check 的日志层报，这里退回转写
 
 def resolve(base, path):
     return path if os.path.isabs(path) else os.path.join(base, path)

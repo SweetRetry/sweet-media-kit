@@ -1,9 +1,9 @@
 """剪辑规则：逐条检查 edl.json 的选段和素材里的区间（崩坏、黑场、台词、镜头边界）的关系，以及场内色彩匹配。"""
-import math, os, statistics
+import math, os, re, statistics
 from common import (BLACK_FRAMES, COARSE_FPS, COARSE_NEAR, COLOR_STEP, EPS, FLICKER, LINE_TAIL, MATCH_GAIN,
-    MATCH_SHIFT, MATCH_STRENGTH, SLIVER, SLOW, SOUNDS, frames_of, is_num, min_speed, out_at, resolve)
-from schema import (DEFECT_KEYS, EDL_KEYS, KINDS, LAYER_KEYS, LOOK_KEYS, SCENE_KEYS, SELECT_KEYS, SEVERITY,
-    SHOT_KEYS, WAIVABLE)
+    MATCH_SHIFT, MATCH_STRENGTH, SLIVER, SLOW, SOUNDS, frames_of, is_num, lines_of, min_speed, out_at, resolve)
+from schema import (DEFECT_KEYS, EDL_KEYS, KINDS, LAYER_KEYS, LINE_KEYS, LOOK_KEYS, SCENE_KEYS, SELECT_KEYS, SEVERITY,
+    SHOT_KEYS, SUBS_KEYS, TITLE_KEYS, WAIVABLE)
 
 def range_stats(f, spans):
     """素材几段区间合起来的每通道 (均值, 标准差)。"""
@@ -69,6 +69,15 @@ def log_issues(cid, e, f):
     for d in e.get("defects") or []:
         if msg := defect_issue(d, f["duration"]):
             out.append(f"{cid} 崩坏 {d.get('t0')}-{d.get('t1') if isinstance(d, dict) else d}：{msg}")
+    if "lines" in e:
+        ls = e["lines"]
+        if not isinstance(ls, list) or not all(
+                isinstance(l, dict) and set(l) <= LINE_KEYS and is_num(l.get("t0"), l.get("t1"))
+                and 0 <= l["t0"] < l["t1"] <= f["duration"] + 0.1 and isinstance(l.get("text"), str) and l["text"].strip()
+                for l in ls):
+            out.append(f"{cid} 的 lines 每句要 {{t0, t1, text}}，区间在 0-{f['duration']} 内，text 不为空")
+        elif any(a["t1"] > b["t0"] + 0.01 for a, b in zip(ls, ls[1:])):
+            out.append(f"{cid} 的 lines 要按时间排，前后不重叠")
     return out
 
 def clean_range(t0, t1, avoid, lines, bounds, sp, fixed_head, fixed_tail, dur):
@@ -135,8 +144,29 @@ def select_fx_issues(s):
             out.append("shake 每项要 {at, dur, amp}，dur 为正，amp 在 0 到 0.1")
         elif not s["in"] <= k["at"] < s["out"]:
             out.append(f"shake at={k['at']} 不在选段 {s['in']}-{s['out']} 内")
+    c = s.get("focus")
+    if c is not None and not (isinstance(c, list) and len(c) == 2 and is_num(*c) and all(0 <= x <= 1 for x in c)):
+        out.append("focus 要是 [x, y]，取 0 到 1")
     if "match" in s and s["match"] is not False:
         out.append("选段的 match 只能写 false，基准写在场上")
+    return out
+
+def subs_of(edl):
+    """字幕样式，没开字幕返回 None。"""
+    s = edl.get("subs")
+    return None if not s else s if isinstance(s, dict) else {}
+
+def style_issues(x, base):
+    out = []
+    for k, lo, hi in (("size", 0.02, 0.3), ("margin", 0, 0.5), ("fade", 0, 5)):
+        if k in x and not (is_num(x[k]) and lo <= x[k] <= hi):
+            out.append(f"{k} 要在 {lo} 到 {hi} 之间")
+    if "color" in x and not (isinstance(x["color"], str) and re.fullmatch(r"#[0-9a-fA-F]{6}", x["color"])):
+        out.append("color 写成 #RRGGBB")
+    if "font" in x and not (isinstance(x["font"], str) and os.path.exists(resolve(base, x["font"]))):
+        out.append(f"找不到字体文件 {x['font']!r}（相对工作区 {base}）")
+    elif "font" in x and not x["font"].lower().endswith((".ttf", ".otf", ".woff", ".woff2")):
+        out.append(f"字体 {x['font']!r} 浏览器不能按文件加载，换成 ttf、otf 或 woff2")
     return out
 
 def look_issues(look, base):
@@ -210,6 +240,12 @@ def check_edl(edl, facts, log, ids, T, base="."):
         add("format", "edl", "没有任何选段")
     for msg in look_issues(edl.get("look") or {}, base):
         add("format", "look", msg)
+    unproofed, subs = set(), edl.get("subs")
+    if isinstance(subs, dict):
+        for msg in [f"未知字段 {k}" for k in set(subs) - SUBS_KEYS] + style_issues(subs, base):
+            add("format", "subs", msg)
+    elif subs is not None and not isinstance(subs, bool):
+        add("format", "subs", "subs 要是 true、false 或样式对象")
 
     for it in flat:
         s, at = it["sel"], it["at"]
@@ -276,7 +312,11 @@ def check_edl(edl, facts, log, ids, T, base="."):
         tail = None if n + 1 < len(flat) and joined(it, flat[n + 1]) else t1
         shots = [x for x in e.get("shots") or [] if isinstance(x, dict) and is_num(x.get("t0"))]
         bounds = [x["t0"] for x in shots[1:]] if shots else [c["t"] for c in f["cuts"]]
-        lines = f.get("lines") or []
+        lines = lines_of(f, e)
+        if subs_of(edl) is not None and sound_of(s, edl) in ("mix", "voice") and "lines" not in e and cid not in unproofed \
+                and any(l["t0"] < t1 and l["t1"] > t0 for l in lines):
+            unproofed.add(cid)
+            add("subs", at, f"{cid} 的台词还是机器转写，字不可信，不能直接烧成字幕。在 log.json 给它写校对过的 lines")
         defects = [d for d in e.get("defects") or [] if not defect_issue(d, f["duration"])]
         first = len(found)
         avoid = [(b0, b1) for b0, b1 in f.get("black", []) if min(t1, b1) - max(t0, b0) >= (BLACK_FRAMES - 0.5) / fps]
@@ -398,4 +438,30 @@ def check_edl(edl, facts, log, ids, T, base="."):
                 add("format", at, f"{key} 要是非负数")
         if "gain" in L and not is_num(L["gain"]):
             add("format", at, "gain 要是数")
+    for k, L in enumerate(edl.get("titles") or []):
+        at = f"titles#{k}"
+        if not isinstance(L, dict):
+            add("format", at, "标题要是对象")
+            continue
+        for msg in [f"未知字段 {key}" for key in set(L) - TITLE_KEYS] + style_issues(L, base):
+            add("format", at, msg)
+        if not L.get("why"):
+            add("why", at, "没写 why")
+        if not (isinstance(L.get("text"), str) and L["text"].strip()):
+            add("format", at, "缺 text")
+        spans = {key: anchor_span(flat, L[key], fps) for key in ("from", "to") if key in L}
+        if "from" not in L:
+            add("format", at, "缺 from 锚点")
+        for key, sp_ in spans.items():
+            if sp_ is None:
+                add("format", at, f"{key}={L[key]!r} 不是场 id，也不是选段（如 C#6）")
+        if "offset" in L and not (is_num(L["offset"]) and L["offset"] >= 0):
+            add("format", at, "offset 要是非负数")
+        elif spans.get("from") and spans["from"][0] + L.get("offset", 0.0) >= round(t, 3):
+            add("format", at, "from 加 offset 已经过了片尾")
+        if "dur" in L and not (is_num(L["dur"]) and L["dur"] >= 0.1):
+            add("format", at, "dur 至少 0.1 秒")
+        p = L.get("pos")
+        if p is not None and not (isinstance(p, list) and len(p) == 2 and is_num(*p) and all(0 <= x <= 1 for x in p)):
+            add("format", at, "pos 要是 [x, y]，取 0 到 1")
     return found, notes, flat, round(t, 3)

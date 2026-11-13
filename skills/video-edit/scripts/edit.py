@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""video-edit：一批素材剪成一条成片。只依赖标准库和 ffmpeg、ffprobe，台词另需 whisper-cli。
+"""video-edit：一批素材剪成一条成片。只依赖标准库和 ffmpeg、ffprobe，台词另需 whisper-cli，字幕和标题另需 Chromium 内核的浏览器。
 
   edit.py init <素材目录> --lang ja|zh|en|…|none [--whisper-model P] [--vad-model P]
   edit.py analyze [--clip ID …] [--threshold T] [--stems] [--force]
@@ -10,7 +10,10 @@
   edit.py check                                              逐层检查 -> check.json、edl.md
   edit.py inspect                                            给挨着选段边缘、只粗看过的崩坏出 6fps 局部图
   edit.py gaps                                               edl.json 的缺镜头 -> reshoots.md 补拍单和参考帧
-  edit.py render [--force]                                   edl.json -> cuts/vN.mp4、vN.json、成片触点图
+  edit.py render [--force]                                   edl.json -> cuts/vN.mp4、vN.json、vN.srt、成片触点图
+  edit.py export --aspect 9:16 [--fit crop|blur] [--height H] [--no-text] [--cut N]
+                                                           最新成片 -> 别的画幅版本，文字按新画幅重排
+  edit.py export --cover T [--cut N]                         成片第 T 秒的无字原尺寸封面
 
 工作区默认 <素材目录>/.video-edit/。不传 --work 时从当前目录向上找 project.json。
 init 可以重跑：重新扫描素材目录，没传的设置保持原样。
@@ -20,6 +23,7 @@ from schema import SCHEMA
 from analyze import cmd_analyze, cmd_init, cmd_sheet
 from check import cmd_check, cmd_gaps, cmd_inspect
 from render import cmd_render
+from export import cmd_export
 
 def cmd_schema(a):
     print("\n\n".join(SCHEMA[k] for k in ([a.which] if a.which else SCHEMA)))
@@ -56,6 +60,13 @@ def main():
     add("inspect", cmd_inspect)
     p = add("render", cmd_render)
     p.add_argument("--force", action="store_true")
+    p = add("export", cmd_export)
+    p.add_argument("--aspect")
+    p.add_argument("--fit", choices=("crop", "blur"), default="crop")
+    p.add_argument("--height", type=int)
+    p.add_argument("--no-text", action="store_true")
+    p.add_argument("--cover", type=float)
+    p.add_argument("--cut", type=int)
     a = ap.parse_args()
     a.fn(a)
 

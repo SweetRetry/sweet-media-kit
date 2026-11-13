@@ -12,13 +12,16 @@ KINDS = {
 }
 SEVERITY = ("major", "minor")
 WAIVABLE = ("defect", "black", "line", "sliver", "coarse", "slow")
-EDL_KEYS = {"scenes", "unused", "sound", "audio", "fade_in", "fade_out", "lufs", "look"}
+EDL_KEYS = {"scenes", "unused", "sound", "audio", "fade_in", "fade_out", "lufs", "look", "subs", "titles"}
 SCENE_KEYS = {"id", "beat", "dissolve", "selects", "match"}
 SELECT_KEYS = {"clip", "in", "out", "why", "flip", "speed", "waive", "color", "frames", "gap", "dur",
-               "sound", "lead", "lag", "gain", "ramp", "hold", "zoom", "center", "shake", "match"}
+               "sound", "lead", "lag", "gain", "ramp", "hold", "zoom", "center", "shake", "match", "focus"}
 LOOK_KEYS = {"lut", "contrast", "saturation", "gamma", "temperature", "shadows", "highlights",
              "vignette", "grain", "deflicker"}
 LAYER_KEYS = {"file", "from", "to", "offset", "in", "gain", "fade", "duck", "why"}
+SUBS_KEYS = {"size", "margin", "color", "font"}
+TITLE_KEYS = {"text", "from", "to", "offset", "dur", "pos", "size", "fade", "color", "font", "why"}
+LINE_KEYS = {"t0", "t1", "text"}
 SHOT_KEYS = {"t0", "t1", "what", "framing", "text", "side"}
 DEFECT_KEYS = {"t0", "t1", "kind", "severity", "seen", "note"}
 SCHEMA = {"log": """log.json：看片日志。analyze 按切点候选生成骨架，看图之后由你填写和修正。
@@ -28,13 +31,16 @@ SCHEMA = {"log": """log.json：看片日志。analyze 按切点候选生成骨�
   "shots": [{"t0": 0.0, "t1": 2.75, "what": "床头闹钟特写，红色数字",
              "framing": "特写", "text": "08:47", "side": "A 左 B 右"}],
   "defects": [{"t0": 16.0, "t1": 18.0, "kind": "motion", "severity": "major",
-               "seen": 4, "note": "起身时睡衣拖影，带出多余肢体"}]}}}
+               "seen": 4, "note": "起身时睡衣拖影，带出多余肢体"}],
+  "lines": [{"t0": 3.1, "t1": 4.6, "text": "又睡过头了。"}]}}}
 
 shots    首尾相接，盖满 0 到素材时长。切点候选漏了就拆开，误检就合并。
          what 必填。framing 景别机位，text 画面上的字，side 主体在画面的左右，选填。
          有两个以上主体或有方向运动的镜头填 side，查越轴靠它。
 defects  t0 写到看得见问题的最早一帧。seen 是看这段用的抽帧密度（fps），缺省 1。
          只在 1fps 图上看到的，区间前后各放 0.5 秒。
+lines    校对过的台词，选填。写了就整份替代 clips.json 里这条素材的机器转写：成片台词表、字幕、
+         「不切开台词」的规则都用它。从 clips.json 的 lines 抄过来，按剧本改字，删掉转写出的幻听，时间只在明显不对时改。
          severity：major 选段必须避开；minor 可以用，check 只记一笔。
          kind 取值：
 """ + "\n".join(f"           {k:<9}{v}" for k, v in KINDS.items()),
@@ -62,6 +68,9 @@ defects  t0 写到看得见问题的最早一帧。seen 是看这段用的抽帧
  "look": {"lut": "looks/film.cube", "contrast": 1.06, "saturation": 0.92, "temperature": 6200,
           "shadows": [-0.04, 0, 0.05], "highlights": [0.04, 0.01, -0.03], "vignette": 0.3, "grain": 6,
           "deflicker": true},
+ "subs": {"size": 0.045, "margin": 0.08},
+ "titles": [{"text": "片名", "from": "A", "offset": 0.5, "dur": 2.5, "pos": [0.5, 0.42], "size": 0.1, "fade": 0.4,
+             "why": "开场镜头稳住之后出片名"}],
  "fade_in": 0.3, "fade_out": 0.8, "lufs": -16}
 
 scenes   一场一个拍点，按叙事顺序。beat 必填，观众在这一场必须得到的一件事，一句话。
@@ -94,6 +103,18 @@ audio    声音层，音乐和音效。file 相对工作区或绝对路径。fro
 waive    {规则: 原因}，明知违反还要用。可豁免：""" + " ".join(WAIVABLE) + """。
 unused   没用上的素材和原因。每条素材要么在选段里，要么在这里。
 fade_in fade_out lufs  片头片尾淡入淡出秒数、目标响度，缺省 0.3、0.8、-16。
+subs     烧进画面的对白字幕。true 用缺省样式，或写对象：size 字高占画高的比例（缺省 0.045），
+         margin 字幕底边离画面底边的比例（缺省 0.08），color 如 "#FFFFFF"，font 字体文件路径（ttf、otf、woff2），缺省用系统的中文黑体。
+         字幕的字和时间取自成片里听得到的台词，跟着剪辑走，不单独写时间。
+         用到的素材要先在 log.json 写校对过的 lines，check 报 subs 就是还没校对。一句太长自动折成两行，再长拆成前后两条。
+         render 另出 vN.srt，不开 subs 也出。
+titles   标题、片名、落款等文字层。text 必填，可用 \\n 换行。from、to、offset 和声音层同义；dur 是显示秒数，
+         写了 dur 就不看 to，都不写就盖满 from 的那一场或那一段。
+         pos 文字块中心 [x, y]，取 0 到 1，缺省画面正中。size 字高占画高的比例（缺省 0.08）。
+         fade 两头淡入淡出秒数（缺省 0.3）。color、font 同 subs。
+focus    选段的字段，[x, y] 取 0 到 1：成片画面里主体的位置。edit.py export 裁别的画幅时以它为中心，
+         缺省画面正中。主体不在正中的段都写上，要出别的画幅时才用得到。
+文字靠无头浏览器排版：要装 Chrome、Chromium 或 Edge，路径不在常见位置时写进环境变量 VIDEO_EDIT_BROWSER。
 look     全片统一的调色和质感，在剪完、叠化之后、淡入淡出之前一次作用于整片。各项都可省。
          lut .cube 文件，相对工作区或绝对路径。contrast saturation gamma 缺省 1。
          temperature 色温 K，缺省 6500，低于它偏暖，高于它偏冷。

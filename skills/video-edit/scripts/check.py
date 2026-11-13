@@ -30,6 +30,10 @@ def edl_md(edl, flat, total, fps, path):
         L += ["## 声音层", "", "| # | 文件 | 从 | 到 | gain | duck | why |", "|---|---|---|---|---|---|---|"]
         L += [f"| {k} | {x.get('file')} | {x.get('from')} | {x.get('to', '片尾')} | {x.get('gain', 0)} | {x.get('duck', '')} "
               f"| {x.get('why', '')} |" for k, x in enumerate(edl["audio"]) if isinstance(x, dict)]
+    if edl.get("titles") or edl.get("subs"):
+        L += ["", "## 文字", "", f"字幕：{'开' if edl.get('subs') else '关'}", "", "| # | 文字 | 从 | 秒 | why |", "|---|---|---|---|---|"]
+        L += [f"| {k} | {str(x.get('text', '')).replace(chr(10), ' / ')} | {x.get('from')} | {x.get('dur', '')} | {x.get('why', '')} |"
+              for k, x in enumerate(edl.get("titles") or []) if isinstance(x, dict)]
     with open(path, "w") as f:
         f.write("\n".join(L))
 

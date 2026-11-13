@@ -1,10 +1,11 @@
 """render：逐段出画面（变速、运镜、色彩匹配），叠化拼接，全片调色和质感，混音，出成片报告。"""
 import array, glob, json, math, os, re, shutil, statistics
-from common import (EPS, GAIN_CAP, HANDLE, REF_LUFS, SEAM_JUMP, SHEET_BUDGET, Ws, decode16k, die, frames_of,
-    grid_note, integrated_lufs, jdump, jload, latest_cut, make_sheets, out_at, pieces, probe, resolve, rms_db, run,
-    sha1)
+from common import (EPS, GAIN_CAP, HANDLE, REF_LUFS, SEAM_ALIKE, SEAM_JUMP, SHEET_BUDGET, Ws, decode16k, die, frames_of,
+    grid_note, integrated_lufs, jdump, jload, latest_cut, lines_of, make_sheets, out_at, pieces, probe, resolve,
+    rms_db, run, sha1)
 from analyze import pixel_stats
 from rules import anchor_span, check_edl, grade_of, sound_of, zoom_of
+from text import burn, find_browser, layout, text_plan, write_srt
 
 def ramp_pts(sel):
     """setpts 表达式：输入帧时间 T（从入点算起）到成片时间，和 pieces 的积分一致。"""
@@ -200,15 +201,38 @@ def seam_jumps(out, flat):
         rows.append({"t": it["t"], "at": it["at"], "before_db": b, "after_db": c, "jump": round(abs(c - b), 1)})
     return rows
 
+def seam_alike(out, flat, fps):
+    """每个剪点两侧的构图相似度：前一段最后一帧和后一段第一帧缩成 32×18 灰度图的相关系数。
+    两条分别生成的素材，同一构图的像素也对不齐，硬切是跳，叠化是抖。同一条素材首尾相接的两段画面上不是剪点，跳过。"""
+    def thumb(n):
+        raw = run(["ffmpeg", "-v", "error", "-ss", f"{max(0.0, (n - 0.5) / fps):.4f}", "-i", out, "-frames:v", "1",
+                   "-vf", "scale=32:18:flags=area,format=gray", "-f", "rawvideo", "-"], binary=True).stdout
+        return raw[:576]
+    rows = []
+    for a, it in zip(flat, flat[1:]):
+        sa, sb = a["sel"], it["sel"]
+        if "clip" not in sa or "clip" not in sb or (sa["clip"] == sb["clip"] and abs(sa["out"] - sb["in"]) < 0.01):
+            continue
+        x, y = thumb(round(it["t"] * fps) - 1), thumb(round((it["t"] + (it["dissolve"] or 0.0)) * fps))   # 叠化的取叠化前后各一帧
+        if len(x) < 576 or len(y) < 576:
+            continue
+        mx, my = sum(x) / 576, sum(y) / 576
+        vx, vy = sum((p - mx) ** 2 for p in x), sum((q - my) ** 2 for q in y)
+        r = sum((p - mx) * (q - my) for p, q in zip(x, y)) / math.sqrt(vx * vy) if vx and vy else 0.0
+        rows.append({"t": it["t"], "at": it["at"], "alike": round(r, 2)})
+    return rows
+
 def cmd_render(a):
     ws = Ws(a.work)
-    T, facts = ws.project["target"], ws.facts()
+    T, facts, log = ws.project["target"], ws.facts(), ws.log()
     edl = jload(ws.p("edl.json"))
-    found, _, flat, total = check_edl(edl, facts, ws.log(), ws.ids, ws.project["target"], ws.dir)
+    found, _, flat, total = check_edl(edl, facts, log, ws.ids, ws.project["target"], ws.dir)
     if any(not it["ok"] for it in flat) or not flat:
         die("edl.json 有选段格式不对或越界，先跑 edit.py check")
     if (todo := [x for x in found if not x.get("waived")]) and not a.force:
         die(f"edl.json 有 {len(todo)} 处未处理的问题，先跑 edit.py check。只要草稿就加 --force")
+    if edl.get("subs") or edl.get("titles"):
+        find_browser()   # 渲染要几分钟，缺依赖在开头就报
     blocks, joins = [], []
     for it in flat:
         if not blocks or it["dissolve"]:
@@ -226,7 +250,8 @@ def cmd_render(a):
     built = [build_block(ws, k, b, tmp, T, look) for k, b in enumerate(blocks)]
     grades = grade_report(flat, facts, T)
     fi, fo = edl.get("fade_in", 0.3), edl.get("fade_out", 0.8)
-    lines = cut_lines(flat, facts, edl)
+    lines = cut_lines(flat, facts, log, edl)
+    plan = text_plan(edl, flat, lines, ws.fps, total, ws.dir)
     placements = sync_placements(ws, edl, flat, facts, ws.fps)
     placements += layer_placements(ws, edl, flat, ws.fps, total, [(l["t"], l["t_end"]) for l in lines])
     sound = render_sound(placements, total, fi, fo, tmp)
@@ -253,16 +278,23 @@ def cmd_render(a):
     last = latest_cut(ws)   # 版本号跟报告走，渲染失败留下的半成品会被覆盖
     n = 1 + (int(re.search(r"v(\d+)\.json$", last).group(1)) if last else 0)
     out = ws.p("cuts", f"v{n}.mp4")
+    clean = ws.p("cuts", f"v{n}_clean.mp4") if plan else out   # 有文字时留一份无字母版，出别的画幅时文字重新排
     os.makedirs(os.path.dirname(out), exist_ok=True)
     run(["ffmpeg", "-v", "error", "-y", "-i", mix] + (["-af", ln2] if m["input_i"] != "-inf" else []) + ["-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
-         "-movflags", "+faststart", out])
-    shutil.rmtree(tmp, ignore_errors=True)
-
+         "-movflags", "+faststart", clean])
     W, H = T["width"], T["height"]
+    if plan:
+        burn(clean, layout(plan, W, H, tmp), out, T["fps"])
+    shutil.rmtree(tmp, ignore_errors=True)
+    srt = ws.p("cuts", f"v{n}.srt") if lines else None
+    if srt:
+        write_srt(lines, total, srt)
+
     sheets, cols, rows = make_sheets(out, ws.p("cuts", f"v{n}_sheet"), 1, W, H, tile_w=240 if W >= H else 160)
     seams, seam_rows = seam_sheets(out, ws.p("cuts", f"v{n}_seams"), flat, T)
     lines = [{k: v for k, v in l.items() if k not in ("key", "t_end")} for l in lines]
     jumps = seam_jumps(out, flat)
+    alike = seam_alike(clean, flat, T["fps"])
     loud = [j for j in jumps if j["jump"] >= SEAM_JUMP]
     lines_txt = ws.p("cuts", f"v{n}_lines.txt")
     with open(lines_txt, "w") as f:
@@ -270,19 +302,25 @@ def cmd_render(a):
         f.write("".join(f"{l['t']:7.2f}  {l['text']}\n" for l in lines) or "（没有台词）\n")
     rep = {"out": out, "edl_sha1": sha1(ws.p("edl.json")), "duration": probe(out)["duration"], "expected": total,
            "lufs": integrated_lufs(out), "target_lufs": target, "size": f"{W}x{H}", "fps": T["fps"],
+           "clean": clean, "srt": srt, "text": plan,
            "sheets": sheets, "sheet_grid": grid_note(0, 1, cols, rows),
-           "seams": seams, "seam_rows": seam_rows, "lines": lines_txt, "seam_jumps": jumps,
+           "seams": seams, "seam_rows": seam_rows, "lines": lines_txt, "seam_jumps": jumps, "seam_alike": alike,
            "grade": grades,
            "sound": [{k: (round(v, 3) if isinstance(v, float) else v) for k, v in p.items() if k not in ("src", "duck")}
                      for p in placements],
            "segments": [{"t": it["t"], "at": it["at"], "clip": it["sel"].get("clip") or it["sel"].get("color") or "gap",
-                         "in": it["sel"].get("in"), "out": it["sel"].get("out"), "frames": it["frames"]} for it in flat]}
+                         "in": it["sel"].get("in"), "out": it["sel"].get("out"), "frames": it["frames"],
+                         "focus": it["sel"].get("focus")} for it in flat]}
     jdump(rep, ws.p("cuts", f"v{n}.json"))
     drift = rep["duration"] - total
     print(f"{out}\n  {rep['duration']}s（预计 {total}s，差 {drift:+.2f}s）  {rep['lufs']} LUFS（目标 {target}）")
     print(f"  整片触点图 {len(sheets)} 张，{rep['sheet_grid']}")
     print(f"  剪点图 {len(seams)} 张，每行一个剪点：出点前两帧 | 入点后两帧，行与剪点的对应见 vN.json 的 seam_rows")
-    print(f"  成片台词表 {lines_txt}")
+    print(f"  成片台词表 {lines_txt}" + (f"，字幕文件 {srt}" if srt else ""))
+    if plan:
+        subs_n = sum(1 for p in plan if p["kind"] == "sub")
+        print(f"  文字 {subs_n} 条字幕、{len(plan) - subs_n} 条标题已烧进画面，无字母版 {clean}。"
+              "触点图上字太小看不清，用 edit.py sheet <成片> --at 秒 逐条看")
     for g in grades:
         print(f"  色彩匹配 {g['at']} 对基准 {g['ref']}：均值差 {g['before']} → {g['after']}" + ("，已到校正上限" if g["capped"] else ""))
     if moving := [it["at"] for it in flat if it["ok"] and "clip" in it["sel"] and
@@ -290,6 +328,9 @@ def cmd_render(a):
         print(f"  运动效果 {len(moving)} 段（{' '.join(moving)}）：手感看不到，进看片清单")
     print(f"  剪点响度跳变 ≥ {SEAM_JUMP:g} dB 的 {len(loud)} 处（进听片清单）：" +
           "，".join(f"{j['t']:.2f}s 进 {j['at']} {j['before_db']}→{j['after_db']}" for j in loud))
+    same = [x for x in alike if x["alike"] >= SEAM_ALIKE]
+    print(f"  剪点两侧构图相近（相似度 ≥ {SEAM_ALIKE:g}）的 {len(same)} 处，对着剪点图确认，是同一构图就按 craft 的接缝改：" +
+          "，".join(f"{x['t']:.2f}s 进 {x['at']} {x['alike']}" for x in same))
     print("\n".join(f"  {s}" for s in sheets + seams))
 
 def grade_report(flat, facts, T):
@@ -341,7 +382,7 @@ def seam_sheets(out, prefix, flat, T):
               for k, it in enumerate(cuts)]
     return files, labels
 
-def cut_lines(flat, facts, edl):
+def cut_lines(flat, facts, log, edl):
     """同期声里听得到的台词，换算到成片时间。"""
     out = []
     for it in flat:
@@ -350,7 +391,7 @@ def cut_lines(flat, facts, edl):
             continue
         sp = s.get("speed", 1.0)
         a0, a1 = s["in"] - s.get("lead", 0.0) * sp, s["out"] + s.get("lag", 0.0) * sp
-        for l in facts[s["clip"]].get("lines") or []:
+        for l in lines_of(facts[s["clip"]], log.get(s["clip"])):
             seen = out and out[-1]["key"] == (s["clip"], l["t0"])   # 连续镜头跨两段的同一句只记一次
             if l["t0"] < a1 and l["t1"] > a0 and not seen:
                 out.append({"t": round(it["t"] + (max(l["t0"], a0) - s["in"]) / sp, 2),
