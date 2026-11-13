@@ -1,0 +1,7 @@
+interface:
+  display_name: "Element Design"
+  short_description: "从概念简报到验证图的原创角色、场景与特效概念设计流程"
+  default_prompt: "使用 $element-design 先写可画出的概念简报与设计主张，跨域收参考并提炼设计规则，按变化轴发散并把主张推过头，细化后锁定设计规格，再出主视觉与验证图并逐条验收。"
+
+policy:
+  allow_implicit_invocation: false

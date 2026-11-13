@@ -1,7 +1,7 @@
 interface:
   display_name: "Film Pipeline"
-  short_description: "按立项、故事、视觉、特效、镜头、生成装配逐阶段推进 AIGC 短片"
-  default_prompt: "使用 $film-pipeline 按立项、故事、视觉、特效、镜头、生成装配六个阶段推进短片，每类决策只在所属阶段做出，每阶段过完整、越界、承接三项关卡后再进入下一阶段。"
+  short_description: "按立项、故事、资产、镜头、生成装配逐阶段推进 AIGC 短片制作"
+  default_prompt: "使用 $film-pipeline 按立项、故事、资产、镜头、生成装配五个阶段推进短片制作，每类决策只在所属阶段做出，每阶段过完整、越界、承接三项关卡后再进入下一阶段。"
 
 policy:
   allow_implicit_invocation: false

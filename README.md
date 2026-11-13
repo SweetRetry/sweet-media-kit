@@ -4,25 +4,25 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 
 ## Skills
 
-- `film-pipeline`：按立项、故事、视觉、特效、镜头、生成装配六个阶段推进 AIGC 短片，每类决策只在所属阶段做出，逐阶段过关卡。
+- `film-pipeline`：按立项、故事、资产、镜头、生成装配五个阶段推进 AIGC 短片制作，每类决策只在所属阶段做出，逐阶段过关卡。外观设计作为输入登记，不在流程里做。
 - `image-prompt`：按主体、构图、色彩光影、材质肌理、风格美学五层编写单张图片的生成或编辑 prompt，输出分 section 的结构化提示词。
 - `video-prompt`：按六层与时间轴编写单次生成、编辑或延长视频的 prompt，写清因果、连续性与无歧义表达。
 - `fight-prompt`：编写冷热兵器、拳脚、机甲、超凡法术与巨物战的视频 prompt，覆盖单镜精拍、多镜长段与分段接力，锁死攻防力学、实体视效、节奏曲线、空间战损与运镜交接。
-- `video-edit`：把一批无序视频素材剪成一条成片，或按意见修改已有成片。
+- `video-edit`：把一批无序视频素材剪成一条成片，或按意见修改已有成片。含调色、混音、变速与运镜、字幕与标题、多画幅导出。
 - `image-reverse`：反推参考图为规则 JSON。复刻模式保留内容与位置，输出可复刻原图的生成 prompt；锚点模式剥离具体内容，抽取可迁移到新主体、可锁定系列视觉的风格规则。
-- `character-design`：从一句话概念做原创角色设计。概念简报、跨域参考板、剪影探索、设计细化与设计规格锁定，再出主视觉、三视图与动作测试，逐阶段验收。
+- `element-design`：从一句话概念做原创的角色、场景或特效概念设计。概念简报与设计主张、跨域参考板、发散探索、设计细化与设计规格锁定，再出主视觉与验证图，逐阶段验收。
 - `sprite-motion`：用生图素材做游戏风动效短视频。生成精灵图与背景层，本地抠图切帧，按节拍编排动作，加开场钩子、打击感特效与音效，合成成片。
 
 ## 相邻能力的边界
 
 | 任务 | 入口 | 按需加载 |
 | --- | --- | --- |
-| 分阶段推进短片的故事、视觉、特效与分镜 | `film-pipeline` | 当前阶段 reference |
+| 分阶段推进短片的故事、资产登记、分镜与生成装配 | `film-pipeline` | 当前阶段 reference |
 | 剪辑视频素材成片 | `video-edit` | 按需读剪辑手法与看片 reference |
 | 写单张图片／单次视频 prompt | `image-prompt`／`video-prompt` | 无 reference |
 | 写战斗、交手或出招终爆的视频 prompt | `fight-prompt` | 无 reference |
 | 反推参考图为复刻 prompt 或风格锚点 | `image-reverse` | 无 reference |
-| 从概念到三视图设计原创角色 | `character-design` | 无 reference |
+| 从概念到验证图设计原创角色、场景或特效 | `element-design` | 所设计类型的 reference |
 | 用生图素材合成游戏风动效短视频 | `sprite-motion` | `scripts/sprites.py`、`scripts/pose_guide.py`；做特效时读 `references/juice.md` |
 
 这些入口互不引用，也不默认串联；同一任务确实包含多类问题时再组合。
