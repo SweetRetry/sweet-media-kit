@@ -4,7 +4,7 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 
 ## Skills
 
-- `film-pipeline`：按立项、故事、资产、镜头、生成装配五个阶段推进 AIGC 短片制作，每类决策只在所属阶段做出，逐阶段过关卡。外观设计作为输入登记，不在流程里做。
+- `film-pipeline`：按立项、故事、资产、镜头、生成装配、后期六个阶段推进 10 分钟以内 AIGC 短片或系列制作，一律以 R2V 参考生视频优先，每类决策只在所属阶段做出，逐阶段过关卡。外观设计作为输入登记，后期用 FFmpeg 处理基础拼接、字卡与字幕。
 - `image-prompt`：按主体、构图、色彩光影、材质肌理、风格美学五层编写单张图片的生成或编辑 prompt，输出分 section 的结构化提示词。
 - `video-prompt`：按六层与时间轴编写单次生成、编辑或延长视频的 prompt，写清因果、连续性与无歧义表达。
 - `fight-prompt`：编写冷热兵器、拳脚、机甲、超凡法术与巨物战的视频 prompt，覆盖单镜精拍、多镜长段与分段接力，锁死攻防力学、实体视效、节奏曲线、空间战损与运镜交接。
@@ -17,7 +17,7 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 
 | 任务 | 入口 | 按需加载 |
 | --- | --- | --- |
-| 分阶段推进短片的故事、资产登记、分镜与生成装配 | `film-pipeline` | 当前阶段 reference |
+| 分阶段推进 10 分钟以内短片的故事、资产登记、R2V 分镜装配与 FFmpeg 基础后期 | `film-pipeline` | 当前阶段 reference |
 | 剪辑视频素材成片 | `video-edit` | 按需读剪辑手法与看片 reference |
 | 写单张图片／单次视频 prompt | `image-prompt`／`video-prompt` | 无 reference |
 | 写战斗、交手或出招终爆的视频 prompt | `fight-prompt` | 无 reference |
