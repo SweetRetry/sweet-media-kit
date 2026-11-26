@@ -4,7 +4,7 @@ description: 视频剪辑：把一批无序视频素材（AI 生成片段、同�
 disable-model-invocation: true
 ---
 
-# 视频剪辑
+# Video Edit
 
 剪辑是把一堆素材变成观众脑子里的一条故事。素材的文件序号不是叙事顺序，同一个拍点常有几条备选，AI 生成的画面会崩坏。
 

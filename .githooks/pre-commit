@@ -1,5 +1,5 @@
 #!/bin/sh
-# Lint staged Markdown and cap every SKILL.md at 500 lines.
+# Lint staged Markdown, cap every SKILL.md at 500 lines, and validate skill invariants.
 # Install once per clone: git config core.hooksPath .githooks
 
 MAX_SKILL_LINES=500
@@ -17,6 +17,12 @@ for f in $(printf '%s\n' "$staged" | grep -E '(^|/)SKILL\.md$'); do
     failed=1
   fi
 done
+
+if [ -f scripts/validate_skills.py ]; then
+  if ! python3 scripts/validate_skills.py >&2; then
+    failed=1
+  fi
+fi
 
 md=$(printf '%s\n' "$staged" | grep -E '\.md$')
 if [ -n "$md" ]; then

@@ -6,11 +6,10 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 
 - `film-pipeline`：按立项、故事、资产、镜头、生成装配、后期六个阶段推进 10 分钟以内 AIGC 短片或系列制作，一律以 R2V 参考生视频优先，每类决策只在所属阶段做出，逐阶段过关卡。外观设计作为输入登记，后期用 FFmpeg 处理基础拼接、字卡与字幕。
 - `image-prompt`：按主体、构图、色彩光影、材质肌理、风格美学五层编写单张图片的生成或编辑 prompt，输出分 section 的结构化提示词。
-- `video-prompt`：按六层与时间轴编写单次生成、编辑或延长视频的 prompt，写清因果、连续性与无歧义表达。
-- `fight-prompt`：编写冷热兵器、拳脚、机甲、超凡法术与巨物战的视频 prompt，覆盖单镜精拍、多镜长段与分段接力，锁死攻防力学、实体视效、节奏曲线、空间战损与运镜交接。
+- `video-prompt`：按六层与模型可兑现的时间粒度编写单次生成、编辑或延长视频的 prompt，R2V 优先，写清因果、连续、无歧义与可见结果。
+- `fight-prompt`：编写冷热兵器、拳脚、机甲、超凡法术与巨物战的视频 prompt，草稿做攻防与戏剧设计，成稿按模型粒度与 R2V 优先输出少量长镜、每拍一个动作与结果。
 - `video-edit`：把一批无序视频素材剪成一条成片，或按意见修改已有成片。含调色、混音、变速与运镜、字幕与标题、多画幅导出。
 - `image-reverse`：反推参考图为规则 JSON。复刻模式保留内容与位置，输出可复刻原图的生成 prompt；锚点模式剥离具体内容，抽取可迁移到新主体、可锁定系列视觉的风格规则。
-- `element-design`：从一句话概念做原创的角色、场景或特效概念设计。概念简报与设计主张、跨域参考板、发散探索、设计细化与设计规格锁定，再出主视觉与验证图，逐阶段验收。
 - `sprite-motion`：用生图素材做游戏风动效短视频。生成精灵图与背景层，本地抠图切帧，按节拍编排动作，加开场钩子、打击感特效与音效，合成成片。
 
 ## 相邻能力的边界
@@ -18,11 +17,10 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 | 任务 | 入口 | 按需加载 |
 | --- | --- | --- |
 | 分阶段推进 10 分钟以内短片的故事、资产登记、R2V 分镜装配与 FFmpeg 基础后期 | `film-pipeline` | 当前阶段 reference |
-| 剪辑视频素材成片 | `video-edit` | 按需读剪辑手法与看片 reference |
+| 把无序或多备选视频素材挑片剪辑成片 | `video-edit` | 按需读剪辑手法与看片 reference |
 | 写单张图片／单次视频 prompt | `image-prompt`／`video-prompt` | 无 reference |
 | 写战斗、交手或出招终爆的视频 prompt | `fight-prompt` | 无 reference |
 | 反推参考图为复刻 prompt 或风格锚点 | `image-reverse` | 无 reference |
-| 从概念到验证图设计原创角色、场景或特效 | `element-design` | 所设计类型的 reference |
 | 用生图素材合成游戏风动效短视频 | `sprite-motion` | `scripts/sprites.py`、`scripts/pose_guide.py`；做特效时读 `references/juice.md` |
 
 这些入口互不引用，也不默认串联；同一任务确实包含多类问题时再组合。
@@ -32,9 +30,9 @@ Retry 的 AIGC 媒体创作 skill：图片与视频 prompt、短片策划与分�
 - 每个 skill 使用独立目录，位于 `skills/<skill>/`，目录名与 `SKILL.md` 中的 `name` 一致；`name`、`display_name` 和一级标题统一使用英文。
 - skill 专属的按需资料放在该 skill 的 `references/`。
 - 保持 skill 职责独立，避免通过目录分层掩盖能力重叠。
-- 全部 skill 只能显式调用，三家宿主各读一份配置，缺一个该宿主就会自动加载：Claude Code 与 pi 读 `SKILL.md` 的 `disable-model-invocation: true`，Codex 读 `agents/openai.yaml` 的 `policy.allow_implicit_invocation: false`。每个 skill 两份都要写；修改后检查显式可调用、隐式不触发。
+- 全部 skill 只能显式调用，三家宿主各读一份配置，缺一个该宿主就会自动加载：Claude Code 与 pi 读 `SKILL.md` 的 `disable-model-invocation: true`，Codex 读 `agents/openai.yaml` 的 `policy.allow_implicit_invocation: false`。每个 skill 两份都要写；修改后运行 `python3 scripts/validate_skills.py` 校验。
 - 用户反馈驱动的修改遵循 [AGENTS.md](AGENTS.md) 中的反馈闭环。
-- 修改 `image-prompt` 或 `video-prompt` 前先读 [docs/prompt-skill-principles.md](docs/prompt-skill-principles.md)。
+- 修改 `image-prompt`、`video-prompt` 或 `fight-prompt` 前先读 [docs/prompt-skill-principles.md](docs/prompt-skill-principles.md)。
 
 ## 安装
 

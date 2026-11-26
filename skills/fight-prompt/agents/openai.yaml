@@ -1,7 +1,7 @@
 interface:
   display_name: "Fight Prompt"
-  short_description: "编写冷热兵器、拳脚、机甲与超凡战斗的视频生成 prompt"
-  default_prompt: "使用 $fight-prompt 结合当前素材与目标入口，先在草稿里设计这场戏与攻防，再按模型能兑现的粒度写出可粘贴 prompt：少量长镜头、每拍一个动作与结果、每镜一条连续运镜。"
+  short_description: "编写冷热兵器、拳脚、机甲与超凡战斗的视频生成 prompt（R2V 优先，按模型粒度成稿）"
+  default_prompt: "使用 $fight-prompt 结合当前素材与目标入口，先在草稿里设计这场戏与攻防，再按模型能兑现的粒度写出可粘贴 prompt：R2V 优先、少量长镜头、每拍一个动作与结果、每镜一条连续运镜。"
 
 policy:
   allow_implicit_invocation: false
